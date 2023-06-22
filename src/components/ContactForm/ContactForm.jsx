@@ -1,10 +1,16 @@
-import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Form, Label, Input, Btn } from './ContactForm.styled';
+import { useDispatch, useSelector } from 'react-redux';
+import { getContacts } from 'redux/selector';
+import { addContact } from 'redux/contactsSlice';
+import { toast } from 'react-toastify';
 
-const ContactForm = ({ createContact }) => {
+const ContactForm = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
 
   const handleChange = ({ target }) => {
     const { name, value } = target;
@@ -25,10 +31,17 @@ const ContactForm = ({ createContact }) => {
   const handleSubmit = e => {
     e.preventDefault();
 
-    createContact({
-      name,
-      number,
-    });
+    const duplicate = contacts.some(
+      contact =>
+        contact.name.toLowerCase() === name.toLowerCase() &&
+        contact.number === number
+    );
+
+    if (duplicate) {
+      return toast.error(`${name} is already in contacts`);
+    }
+
+    dispatch(addContact(name, number));
 
     reset();
   };
@@ -45,7 +58,7 @@ const ContactForm = ({ createContact }) => {
         <Input
           type="text"
           name="name"
-          pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+          pattern="^[a-zA-Zа-яА-Я]+([-' ][a-zA-Zа-яА-Я ]+)*$"
           title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
           required
           onChange={handleChange}
@@ -69,10 +82,6 @@ const ContactForm = ({ createContact }) => {
       <Btn type="submit">Add contact</Btn>
     </Form>
   );
-};
-
-ContactForm.propTypes = {
-  createContact: PropTypes.func.isRequired,
 };
 
 export default ContactForm;
